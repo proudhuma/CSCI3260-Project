@@ -137,6 +137,10 @@
   <ItemGroup>
     <None Include="shader\Common.frag" />
     <None Include="shader\Common.vs" />
+    <None Include="shader\Earth.frag" />
+    <None Include="shader\Earth.vs" />
+    <None Include="shader\planetC.frag" />
+    <None Include="shader\planetC.vs" />
     <None Include="shader\Skybox.frag" />
     <None Include="shader\Skybox.vs" />
   </ItemGroup>

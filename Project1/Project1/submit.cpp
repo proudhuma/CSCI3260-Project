@@ -25,9 +25,13 @@ float camera_fov = 45.0;
 int  mainWindowID;
 GLint programID;
 GLint skyboxProgramID;
+GLint planetC_programID;
+GLint earthProgramID;
 
-GLuint TextureEarth;
-GLuint TexturePlanetC;
+GLuint TextureEarth_0;
+GLuint TextureEarth_1;
+GLuint TexturePlanetC_1;
+GLuint TexturePlanetC_0;
 GLuint TexturePlanetB;
 GLuint TextureObjD;
 GLuint TextureObjG;
@@ -96,9 +100,11 @@ void Mouse_Wheel_Func(int button, int state, int x, int y)
 
 void LoadAllTextures()
 {
-	TextureEarth = loadBMP2Texture("texture/earth.bmp");
+	TextureEarth_0 = loadBMP2Texture("texture/earth.bmp");
+	TextureEarth_1 = loadBMP2Texture("normal_map/earth_normal.bmp");
 	TexturePlanetB = loadBMP2Texture("texture/grass.bmp");
-	TexturePlanetC = loadBMP2Texture("texture/glass_a.bmp");
+	TexturePlanetC_0 = loadBMP2Texture("texture/glass_a.bmp");
+	TexturePlanetC_1 = loadBMP2Texture("texture/apple.bmp");
 	TextureObjD = loadBMP2Texture("texture/helicopter.bmp");
 	TextureObjG = loadBMP2Texture("texture/brickwall.bmp");
 }
@@ -153,7 +159,7 @@ void drawEarth(void)
 	//earth
 	GLfloat scale_fact = 3.0f;
 
-	glUseProgram(programID);
+	glUseProgram(earthProgramID);
 
 	glBindVertexArray(earthVao);
 	glm::mat4 scale_M = glm::scale(glm::mat4(1.0f), glm::vec3(scale_fact));
@@ -161,19 +167,22 @@ void drawEarth(void)
 	glm::mat4 trans_M = glm::translate(glm::mat4(1.0f), glm::vec3(-8.0f, 6.0f, -10.0f));
 	glm::mat4 Model = trans_M * rot_M * scale_M;
 
-	GLint M_ID = glGetUniformLocation(programID, "MM");
+	GLint M_ID = glGetUniformLocation(earthProgramID, "MM");
 	glUniformMatrix4fv(M_ID, 1, GL_FALSE, &Model[0][0]);
-	GLint V_ID = glGetUniformLocation(programID, "VM");
+	GLint V_ID = glGetUniformLocation(earthProgramID, "VM");
 	glUniformMatrix4fv(V_ID, 1, GL_FALSE, &common_viewM[0][0]);
-	GLint P_ID = glGetUniformLocation(programID, "PM");
+	GLint P_ID = glGetUniformLocation(earthProgramID, "PM");
 	glUniformMatrix4fv(P_ID, 1, GL_FALSE, &common_projection[0][0]);
 
 	// texture
-	GLuint TextureID = glGetUniformLocation(programID, "myTextureSampler");
+	GLuint TextureID_0 = glGetUniformLocation(earthProgramID, "myTextureSampler_0");
+	GLuint TextureID_1 = glGetUniformLocation(earthProgramID, "myTextureSampler_1");
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, TextureEarth);
-	glUniform1i(TextureID, 0);
+	glBindTexture(GL_TEXTURE_2D, TextureEarth_0);
+	glUniform1i(TextureID_0, 0);
 	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, TextureEarth_1);
+	glUniform1i(TextureID_1, 0);
 
 	glDrawArrays(GL_TRIANGLES, 0, drawEarthSize);
 }
@@ -183,7 +192,7 @@ void drawPlanetC(void)
 	//Planet C
 	GLfloat scale_fact = 1.5f;
 
-	glUseProgram(programID);
+	glUseProgram(planetC_programID);
 
 	glBindVertexArray(planetCVao);
 	glm::mat4 scale_M = glm::scale(glm::mat4(1.0f), glm::vec3(scale_fact));
@@ -191,19 +200,22 @@ void drawPlanetC(void)
 	glm::mat4 trans_M = glm::translate(glm::mat4(1.0f), glm::vec3(8.0f, -5.0f, 0.0f));
 	glm::mat4 Model = trans_M * rot_M * scale_M;
 
-	GLint M_ID = glGetUniformLocation(programID, "MM");
+	GLint M_ID = glGetUniformLocation(planetC_programID, "MM");
 	glUniformMatrix4fv(M_ID, 1, GL_FALSE, &Model[0][0]);
-	GLint V_ID = glGetUniformLocation(programID, "VM");
+	GLint V_ID = glGetUniformLocation(planetC_programID, "VM");
 	glUniformMatrix4fv(V_ID, 1, GL_FALSE, &common_viewM[0][0]);
-	GLint P_ID = glGetUniformLocation(programID, "PM");
+	GLint P_ID = glGetUniformLocation(planetC_programID, "PM");
 	glUniformMatrix4fv(P_ID, 1, GL_FALSE, &common_projection[0][0]);
 
 	// texture
-	GLuint TextureID = glGetUniformLocation(programID, "myTextureSampler");
+	GLuint TextureID_0 = glGetUniformLocation(planetC_programID, "myTextureSampler_0");
+	GLuint TextureID_1 = glGetUniformLocation(planetC_programID, "myTextureSampler_1");
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, TexturePlanetC);
-	glUniform1i(TextureID, 0);
+	glBindTexture(GL_TEXTURE_2D, TexturePlanetC_0);
+	glUniform1i(TextureID_0, 0);
 	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, TexturePlanetC_1);
+	glUniform1i(TextureID_1, 1);
 
 	glDrawArrays(GL_TRIANGLES, 0, drawPlanetCSize);
 }
@@ -328,7 +340,9 @@ void paintGL(void)
 void Shaders_Installer()
 {
 	programID = installShaders("shader/Common.vs", "shader/Common.frag");
+	planetC_programID = installShaders("shader/planetC.vs", "shader/planetC.frag");
 	skyboxProgramID = installShaders("shader/Skybox.vs", "shader/Skybox.frag");
+	earthProgramID = installShaders("shader/Earth.vs", "shader/Earth.frag");
 
 	if (!checkProgramStatus(programID))
 		return;

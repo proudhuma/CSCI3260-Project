@@ -52,5 +52,17 @@
     <None Include="shader\Skybox.vs">
       <Filter>源文件</Filter>
     </None>
+    <None Include="shader\planetC.frag">
+      <Filter>源文件</Filter>
+    </None>
+    <None Include="shader\planetC.vs">
+      <Filter>源文件</Filter>
+    </None>
+    <None Include="shader\Earth.frag">
+      <Filter>源文件</Filter>
+    </None>
+    <None Include="shader\Earth.vs">
+      <Filter>源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>
