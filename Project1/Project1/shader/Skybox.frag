@@ -1,14 +1,12 @@
 #version 440
 
-in vec2 UV;
+in vec3 TexCoords;
 
 out vec4 daColor;
 
-uniform sampler2D myTextureSampler;
+uniform samplerCube skybox;
 
 void main()
 {
-	vec3 Material_Clr = texture( myTextureSampler, UV).rgb;
-
-	daColor = vec4(Material_Clr, 1.0);
+	daColor = texture(skybox, TexCoords);
 }

@@ -2,6 +2,7 @@
 #include "Dependencies\freeglut\freeglut.h"
 #include "Dependencies\glm\glm.hpp"
 #include "Dependencies\glm\gtc\matrix_transform.hpp"
+#include "Dependencies\glm\gtc\type_ptr.hpp"
 //#include "Dependencies\glui\glui.h"
 
 #include <iostream>
@@ -35,7 +36,10 @@ GLuint TexturePlanetC_0;
 GLuint TexturePlanetB;
 GLuint TextureObjD;
 GLuint TextureObjG;
+GLuint TextureSkybox;
 
+GLuint skyboxVAO;
+GLuint skyboxVBO;
 extern GLuint earthVao;
 extern GLuint planetCVao;
 extern GLuint planetBVao;
@@ -47,6 +51,7 @@ extern int drawPlanetCSize;
 extern int drawPlanetBSize;
 extern int drawObjDSize;
 extern int drawObjGSize;
+
 
 // view matrix
 glm::mat4 common_viewM;
@@ -109,6 +114,58 @@ void LoadAllTextures()
 	TextureObjG = loadBMP2Texture("texture/brickwall.bmp");
 }
 
+GLuint loadCubemap(vector<const GLchar*> faces)
+{
+	GLuint textureID;
+	glGenTextures(1, &textureID);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+	for (GLuint i = 0; i < faces.size(); i++)
+	{
+		printf("Reading image %s\n", faces[i]);
+
+		unsigned char header[54];
+		unsigned int dataPos;
+		unsigned int imageSize;
+		unsigned int width, height;
+		unsigned char * data;
+
+		FILE * file = fopen(faces[i], "rb");
+		if (!file) { printf("%s could not be opened. Are you in the right directory ? Don't forget to read the FAQ !\n", faces[i]); getchar(); return 0; }
+
+		if (fread(header, 1, 54, file) != 54) {
+			printf("Not a correct BMP file\n");
+			return 0;
+		}
+		if (header[0] != 'B' || header[1] != 'M') {
+			printf("Not a correct BMP file\n");
+			return 0;
+		}
+		if (*(int*)&(header[0x1E]) != 0) { printf("Not a correct BMP file\n");    return 0; }
+		if (*(int*)&(header[0x1C]) != 24) { printf("Not a correct BMP file\n");    return 0; }
+
+		dataPos = *(int*)&(header[0x0A]);
+		imageSize = *(int*)&(header[0x22]);
+		width = *(int*)&(header[0x12]);
+		height = *(int*)&(header[0x16]);
+		if (imageSize == 0)    imageSize = width*height * 3;
+		if (dataPos == 0)      dataPos = 54;
+
+		data = new unsigned char[imageSize];
+		fread(data, 1, imageSize, file);
+		fclose(file);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+	return textureID;
+
+}
+
 void sendDataToOpenGL()
 {
 	//Load objects and bind to VAO & VBO
@@ -119,6 +176,33 @@ void sendDataToOpenGL()
 	bindObjG("obj/rock.obj");
 	// load all textures
 	LoadAllTextures();
+
+	// skybox
+	GLfloat skyboxVertices[] =
+	{
+		-1.0f, 1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+		1.0f, 1.0f, -1.0f,
+		-1.0f, 1.0f, -1.0f
+	};
+	glGenVertexArrays(1, &skyboxVAO);
+	glGenBuffers(1, &skyboxVBO);
+	glBindVertexArray(skyboxVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glBindVertexArray(0);
+	vector<const GLchar*> skybox;
+	skybox.push_back("texture/skycity_skybox/right.bmp");
+	skybox.push_back("texture/skycity_skybox/left.bmp");
+	skybox.push_back("texture/skycity_skybox/bottom.bmp");
+	skybox.push_back("texture/skycity_skybox/top.bmp");
+	skybox.push_back("texture/skycity_skybox/back.bmp");
+	skybox.push_back("texture/skycity_skybox/front.bmp");
+	TextureSkybox = loadCubemap(skybox);
 }
 
 float zLightPos = 0.0f;
@@ -310,6 +394,31 @@ void drawObjG(void)
 	glDrawArrays(GL_TRIANGLES, 0, drawObjGSize);
 }
 
+void drawSkybox(void)
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glDepthMask(GL_FALSE);
+	glUseProgram(skyboxProgramID);
+
+	GLuint Skb_ModelUniformLocation = glGetUniformLocation(skyboxProgramID, "M");
+	glm::mat4 Skb_ModelMatrix = glm::mat4(1.0f);
+	glUniformMatrix4fv(Skb_ModelUniformLocation, 1, GL_FALSE, &Skb_ModelMatrix[0][0]);
+	// remove any translation component of the view matrix
+	glm::mat4 view = glm::mat4(glm::mat3(glm::lookAt(vec3(cameraX, cameraY, cameraZ), vec3(cameraX, cameraY, cameraZ - 1.0f), vec3(0, 1, 0))));
+	glm::mat4 projection = glm::perspective(45.0f, (float)Win_w / (float)Win_h, 0.1f, 100.0f);
+	glUniformMatrix4fv(glGetUniformLocation(skyboxProgramID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(glGetUniformLocation(skyboxProgramID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+	glBindVertexArray(skyboxVAO);
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1i(glGetUniformLocation(skyboxProgramID, "skybox"), 0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, TextureSkybox);
+
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
+	glDepthMask(GL_TRUE);
+}
+
 void paintGL(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
@@ -321,6 +430,7 @@ void paintGL(void)
 	common_projection = glm::perspective(camera_fov, 1.0f, 0.1f, 200.0f);
 	
 	//=== draw ===//
+	drawSkybox();
 	// set lighting parameters
 	set_lighting();
 	// draw earth
@@ -332,6 +442,7 @@ void paintGL(void)
 	// draw obj D
 	drawObjD();
 	drawObjG();
+	
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -375,9 +486,10 @@ int main(int argc, char *argv[])
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
 	glutInitWindowPosition(100, 100);
-	int height = GetSystemMetrics(SM_CYSCREEN)*0.8;
+	int height = GetSystemMetrics(SM_CYSCREEN) * 0.8;
+	int width = height; // GetSystemMetrics(SM_CXSCREEN) * 0.8;
 	Win_h = height;
-	Win_w = height;
+	Win_w = width;
 	glutInitWindowSize(Win_w, Win_h);
 
 	glutInitContextVersion(4, 3);
