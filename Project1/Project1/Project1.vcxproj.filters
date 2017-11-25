@@ -64,5 +64,11 @@
     <None Include="shader\Earth.vs">
       <Filter>源文件</Filter>
     </None>
+    <None Include="shader\Lightbox.frag">
+      <Filter>源文件</Filter>
+    </None>
+    <None Include="shader\Lightbox.vs">
+      <Filter>源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

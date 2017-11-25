@@ -6,12 +6,14 @@ GLuint planetBVao;
 GLuint planetCVao;
 GLuint objDVao;
 GLuint objGVao;
+GLuint boxVao;
 
 int drawEarthSize = 0;
 int drawPlanetBSize = 0;
 int drawPlanetCSize = 0;
 int drawObjDSize = 0;
 int drawObjGSize = 0;
+
 
 void bindEarth(const char * path)
 {
@@ -222,3 +224,4 @@ void bindObjG(const char * path)
 	//draw data
 	drawObjGSize = vao5_v.size();
 }
+

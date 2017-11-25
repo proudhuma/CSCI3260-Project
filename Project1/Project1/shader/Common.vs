@@ -10,6 +10,7 @@ uniform mat4 VM;
 
 out vec3 normalWorld;
 out vec2 UV;
+out vec3 vertexPositionWorld;
 
 void main()
 {
@@ -18,6 +19,7 @@ void main()
 	
 	vec4 normal_temp = MM * vec4(normal, 0);
 	normalWorld = normal_temp.xyz;
+	vertexPositionWorld = (MM * v).xyz;
 
 	UV = vertexUV;
 }

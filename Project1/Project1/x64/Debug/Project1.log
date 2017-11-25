@@ -1,13 +1,13 @@
-﻿生成启动时间为 2017/11/25 13:54:51。
+﻿生成启动时间为 2017/11/25 17:02:57。
      1>项目“G:\胡恒\CUHK\Year3 Term1\CSCI 3260\proj\csci3260proj\Project1\Project1\Project1.vcxproj”在节点 2 上(Build 个目标)。
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\x86_amd64\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /D _CRT_SECURE_NO_WARNINGS /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"x64\Debug\\" /Fd"x64\Debug\vc140.pdb" /Gd /TP /errorReport:prompt submit.cpp
          submit.cpp
-     1>g:\胡恒\cuhk\year3 term1\csci 3260\proj\csci3260proj\project1\project1\submit.cpp(63): warning C4305: “初始化”: 从“double”到“float”截断
-     1>g:\胡恒\cuhk\year3 term1\csci 3260\proj\csci3260proj\project1\project1\submit.cpp(477): warning C4305: “+=”: 从“double”到“float”截断
-     1>g:\胡恒\cuhk\year3 term1\csci 3260\proj\csci3260proj\project1\project1\submit.cpp(480): warning C4244: “参数”: 从“float”转换到“unsigned int”，可能丢失数据
-     1>g:\胡恒\cuhk\year3 term1\csci 3260\proj\csci3260proj\project1\project1\submit.cpp(489): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
-     1>g:\胡恒\cuhk\year3 term1\csci 3260\proj\csci3260proj\project1\project1\submit.cpp(506): warning C4244: “参数”: 从“float”转换到“unsigned int”，可能丢失数据
+     1>g:\胡恒\cuhk\year3 term1\csci 3260\proj\csci3260proj\project1\project1\submit.cpp(67): warning C4305: “初始化”: 从“double”到“float”截断
+     1>g:\胡恒\cuhk\year3 term1\csci 3260\proj\csci3260proj\project1\project1\submit.cpp(566): warning C4305: “+=”: 从“double”到“float”截断
+     1>g:\胡恒\cuhk\year3 term1\csci 3260\proj\csci3260proj\project1\project1\submit.cpp(569): warning C4244: “参数”: 从“float”转换到“unsigned int”，可能丢失数据
+     1>g:\胡恒\cuhk\year3 term1\csci 3260\proj\csci3260proj\project1\project1\submit.cpp(578): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+     1>g:\胡恒\cuhk\year3 term1\csci 3260\proj\csci3260proj\project1\project1\submit.cpp(595): warning C4244: “参数”: 从“float”转换到“unsigned int”，可能丢失数据
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"G:\胡恒\CUHK\Year3 Term1\CSCI 3260\proj\csci3260proj\Project1\x64\Debug\Project1.exe" /INCREMENTAL /NOLOGO /LIBPATH:Dependencies\freeglut /LIBPATH:Dependencies\glew opengl32.lib freeglut.lib glew32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"G:\胡恒\CUHK\Year3 Term1\CSCI 3260\proj\csci3260proj\Project1\x64\Debug\Project1.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"G:\胡恒\CUHK\Year3 Term1\CSCI 3260\proj\csci3260proj\Project1\x64\Debug\Project1.lib" /MACHINE:X64 x64\Debug\Bind_Data.obj
          x64\Debug\Loading_func.obj
@@ -18,4 +18,4 @@
 
 已成功生成。
 
-已用时间 00:00:01.79
+已用时间 00:00:01.87

@@ -28,6 +28,7 @@ GLint programID;
 GLint skyboxProgramID;
 GLint planetC_programID;
 GLint earthProgramID;
+GLint lightboxProgramID;
 
 GLuint TextureEarth_0;
 GLuint TextureEarth_1;
@@ -38,6 +39,9 @@ GLuint TextureObjD;
 GLuint TextureObjG;
 GLuint TextureSkybox;
 
+GLuint lightboxVAO;
+GLuint lightboxVBO;
+GLuint lightboxVBO_IDX;
 GLuint skyboxVAO;
 GLuint skyboxVBO;
 extern GLuint earthVao;
@@ -71,7 +75,7 @@ float cameraZ = radius;
 
 float viewRotateDegree[3] = { 0.0f, 0.0f, 0.0f };
 
-float a_brightness = 1.0f;
+float a_brightness = 0.3f;
 float d_brightness = 0.0f;
 float s_brightness = 0.6f;
 
@@ -177,6 +181,66 @@ void sendDataToOpenGL()
 	// load all textures
 	LoadAllTextures();
 
+	// light source box
+	const GLfloat cubic[] =
+	{
+		-1.0f, -1.0f, -1.0f, // position 0
+		+1.0f, +1.0f, +1.0f, // color
+
+		-1.0f, +1.0f, -1.0f, // position 1
+		+1.0f, +1.0f, +1.0f, // color
+
+		+1.0f, -1.0f, -1.0f, // position 2
+		+1.0f, +1.0f, +1.0f, // color
+
+		+1.0f, +1.0f, -1.0f, // postiion 3
+		+1.0f, +1.0f, +1.0f, // color
+
+		-1.0f, -1.0f, +1.0f, // position 4
+		+1.0f, +1.0f, +1.0f, // color
+
+		-1.0f, +1.0f, +1.0f, // position 5
+		+1.0f, +1.0f, +1.0f, // color
+
+		+1.0f, -1.0f, +1.0f, // position 6
+		+1.0f, +1.0f, +1.0f, // color
+
+		+1.0f, +1.0f, +1.0f, // postiion 7
+		+1.0f, +1.0f, +1.0f, // color
+
+	};
+	GLushort indices_1[] = {
+		0, 1, 2,
+		1, 2, 3,
+		4, 5, 6,
+		5, 6, 7,
+		0, 2, 4,
+		2, 4, 6,
+		1, 3, 5,
+		3, 5, 7,
+		2, 3, 6,
+		3, 6, 7,
+		0, 1, 4,
+		1, 4, 5,
+	};
+
+	glGenVertexArrays(1, &lightboxVAO);
+	glGenBuffers(1, &lightboxVBO);
+	glGenBuffers(1, &lightboxVBO_IDX);
+
+	glBindVertexArray(lightboxVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, lightboxVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cubic), cubic, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lightboxVBO_IDX);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices_1), indices_1, GL_STATIC_DRAW);
+
+	//vertex position
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
+	//vertex color
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (char*)(3 * sizeof(float)));
+
 	// skybox
 	GLfloat skyboxVertices[] =
 	{
@@ -205,8 +269,8 @@ void sendDataToOpenGL()
 	TextureSkybox = loadCubemap(skybox);
 }
 
-float zLightPos = 0.0f;
-float yLightPos = 20.0f;
+float zLightPos = 10.0f;
+float yLightPos = 10.0f;
 void set_lighting()
 {
 	glUseProgram(programID);
@@ -419,6 +483,29 @@ void drawSkybox(void)
 	glDepthMask(GL_TRUE);
 }
 
+void drawLightbox(void)
+{
+	// lightbox
+	GLfloat scale_fact = 1.0f;
+
+	glUseProgram(lightboxProgramID);
+
+	glBindVertexArray(lightboxVAO);
+	glm::mat4 scale_M = glm::scale(glm::mat4(1.0f), glm::vec3(scale_fact));
+	glm::mat4 rot_M = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0, 1, 0));
+	glm::mat4 trans_M = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, yLightPos, zLightPos)); // light position
+	glm::mat4 Model = trans_M * rot_M * scale_M;
+
+	GLint M_ID = glGetUniformLocation(lightboxProgramID, "MM");
+	glUniformMatrix4fv(M_ID, 1, GL_FALSE, &Model[0][0]);
+	GLint V_ID = glGetUniformLocation(lightboxProgramID, "VM");
+	glUniformMatrix4fv(V_ID, 1, GL_FALSE, &common_viewM[0][0]);
+	GLint P_ID = glGetUniformLocation(lightboxProgramID, "PM");
+	glUniformMatrix4fv(P_ID, 1, GL_FALSE, &common_projection[0][0]);
+
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, 0);
+}
+
 void paintGL(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
@@ -431,6 +518,7 @@ void paintGL(void)
 	
 	//=== draw ===//
 	drawSkybox();
+	
 	// set lighting parameters
 	set_lighting();
 	// draw earth
@@ -442,7 +530,7 @@ void paintGL(void)
 	// draw obj D
 	drawObjD();
 	drawObjG();
-	
+	drawLightbox();
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -454,6 +542,7 @@ void Shaders_Installer()
 	planetC_programID = installShaders("shader/planetC.vs", "shader/planetC.frag");
 	skyboxProgramID = installShaders("shader/Skybox.vs", "shader/Skybox.frag");
 	earthProgramID = installShaders("shader/Earth.vs", "shader/Earth.frag");
+	lightboxProgramID = installShaders("shader/Lightbox.vs", "shader/Lightbox.frag");
 
 	if (!checkProgramStatus(programID))
 		return;
