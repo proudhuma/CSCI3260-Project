@@ -70,5 +70,11 @@
     <None Include="shader\Lightbox.vs">
       <Filter>源文件</Filter>
     </None>
+    <None Include="shader\Rock.frag">
+      <Filter>源文件</Filter>
+    </None>
+    <None Include="shader\Rock.vs">
+      <Filter>源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

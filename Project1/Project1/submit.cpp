@@ -22,6 +22,7 @@ using glm::mat4;
 // window size
 int Win_w, Win_h;
 float camera_fov = 45.0;
+unsigned int amount = 500;
 
 int  mainWindowID;
 GLint programID;
@@ -29,6 +30,7 @@ GLint skyboxProgramID;
 GLint planetC_programID;
 GLint earthProgramID;
 GLint lightboxProgramID;
+GLint rockProgramID;
 
 GLuint TextureEarth_0;
 GLuint TextureEarth_1;
@@ -48,13 +50,13 @@ extern GLuint earthVao;
 extern GLuint planetCVao;
 extern GLuint planetBVao;
 extern GLuint objDVao;
-extern GLuint objGVao;
+extern GLuint objGVao[500];
 
 extern int drawEarthSize;
 extern int drawPlanetCSize;
 extern int drawPlanetBSize;
 extern int drawObjDSize;
-extern int drawObjGSize;
+extern int drawObjGSize[500];
 
 
 // view matrix
@@ -64,6 +66,7 @@ glm::mat4 common_projection;
 float earth_innRot_Degree = 0.0f;
 
 // ============================= //
+
 const float M_PI = 3.14159265;
 float radius = 30.0f;
 float initViewHorizontal = -90.0f;
@@ -115,7 +118,8 @@ void LoadAllTextures()
 	TexturePlanetC_0 = loadBMP2Texture("texture/glass_a.bmp");
 	TexturePlanetC_1 = loadBMP2Texture("texture/apple.bmp");
 	TextureObjD = loadBMP2Texture("texture/helicopter.bmp");
-	TextureObjG = loadBMP2Texture("texture/brickwall.bmp");
+	//for (GLuint i = 0; i < 500; i++)
+		TextureObjG = loadBMP2Texture("texture/brickwall.bmp");
 }
 
 GLuint loadCubemap(vector<const GLchar*> faces)
@@ -430,32 +434,62 @@ void drawObjD(void)
 
 void drawObjG(void)
 {
-	// object G
-	GLfloat scale_fact = 0.5f;
+	glm::mat4 *modelMatrices;
+	modelMatrices = new glm::mat4[amount];
+	srand(glutGet(GLUT_ELAPSED_TIME));
+	GLfloat radius = 6.0f;
+	GLfloat offset = 0.4f;
+	GLfloat displacement;
+	for (GLuint i = 0; i < amount; i++)
+	{
+		glm::mat4 model;
+		// 1. translation: displace along circle with 'radius' in range [-offset, offset]
+		GLfloat angle = (GLfloat)i / (GLfloat)amount * 360.0f;
+		displacement = (rand() % (GLint)(2 * offset * 100)) / 100.0f - offset;
+		GLfloat x = sin(angle) * radius + displacement;
+		displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+		GLfloat y = displacement * 0.4f + 1; // keep height of field smaller compared to width of x and z
+		displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+		GLfloat z = cos(angle) * radius + displacement;
+		model = glm::translate(model, glm::vec3(x, y, z));
 
-	glUseProgram(programID);
+		// 2. scale: Scale between 0.05 and 0.25f
+		GLfloat scale = (rand() % 20) / 100.0f + 0.05;
+		model = glm::scale(model, glm::vec3(scale));
 
-	glBindVertexArray(objGVao);
-	glm::mat4 scale_M = glm::scale(glm::mat4(1.0f), glm::vec3(scale_fact));
-	glm::mat4 rot_M = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0, 1, 0));
-	glm::mat4 trans_M = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, -0.5f, 0.0f));
-	glm::mat4 Model = trans_M * rot_M * scale_M;
+		// 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
+		float rotAngle = (rand() % 360);
+		model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
 
-	GLint M_ID = glGetUniformLocation(programID, "MM");
-	glUniformMatrix4fv(M_ID, 1, GL_FALSE, &Model[0][0]);
-	GLint V_ID = glGetUniformLocation(programID, "VM");
-	glUniformMatrix4fv(V_ID, 1, GL_FALSE, &common_viewM[0][0]);
-	GLint P_ID = glGetUniformLocation(programID, "PM");
-	glUniformMatrix4fv(P_ID, 1, GL_FALSE, &common_projection[0][0]);
+		// 4. now add to list of matrices
+		modelMatrices[i] = model;
+	}
+	glm::mat4 rockOrbitIni = glm::translate(glm::mat4(1.0f), glm::vec3(8.0f, -5.0f, 0.0f));
+	glm::mat4 rockOrbit_M = glm::rotate(rockOrbitIni, glm::radians(0.0f), glm::vec3(0, 1, 0));
+	glUseProgram(rockProgramID);
 
-	// texture
-	GLuint TextureID = glGetUniformLocation(programID, "myTextureSampler");
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, TextureObjG);
-	glUniform1i(TextureID, 0);
-	glActiveTexture(GL_TEXTURE1);
+	
+	for (GLuint i = 0; i < 500; i++) {
+		glBindVertexArray(objGVao[i]);
 
-	glDrawArrays(GL_TRIANGLES, 0, drawObjGSize);
+		glm::mat4 rockModelMat_temp = modelMatrices[i];
+		rockModelMat_temp = rockOrbit_M * rockModelMat_temp;
+
+		GLint M_ID = glGetUniformLocation(rockProgramID, "MM");
+		glUniformMatrix4fv(M_ID, 1, GL_FALSE, &rockModelMat_temp[0][0]);
+		GLint V_ID = glGetUniformLocation(rockProgramID, "VM");
+		glUniformMatrix4fv(V_ID, 1, GL_FALSE, &common_viewM[0][0]);
+		GLint P_ID = glGetUniformLocation(rockProgramID, "PM");
+		glUniformMatrix4fv(P_ID, 1, GL_FALSE, &common_projection[0][0]);
+
+		GLuint TextureID = glGetUniformLocation(rockProgramID, "myTextureSampler");
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, TextureObjG);
+		glUniform1i(TextureID, 0);
+		glActiveTexture(GL_TEXTURE1);
+		glDrawArrays(GL_TRIANGLES, 0, drawObjGSize[i]);
+	}
+	
 }
 
 void drawSkybox(void)
@@ -543,6 +577,7 @@ void Shaders_Installer()
 	skyboxProgramID = installShaders("shader/Skybox.vs", "shader/Skybox.frag");
 	earthProgramID = installShaders("shader/Earth.vs", "shader/Earth.frag");
 	lightboxProgramID = installShaders("shader/Lightbox.vs", "shader/Lightbox.frag");
+	rockProgramID = installShaders("shader/Rock.vs", "shader/Rock.frag");
 
 	if (!checkProgramStatus(programID))
 		return;

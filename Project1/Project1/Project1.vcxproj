@@ -143,6 +143,8 @@
     <None Include="shader\Lightbox.vs" />
     <None Include="shader\planetC.frag" />
     <None Include="shader\planetC.vs" />
+    <None Include="shader\Rock.frag" />
+    <None Include="shader\Rock.vs" />
     <None Include="shader\Skybox.frag" />
     <None Include="shader\Skybox.vs" />
   </ItemGroup>
