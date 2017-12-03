@@ -2,8 +2,13 @@
 
 in vec3 normalWorld;
 in vec2 UV;
+in vec3 vertexPositionWorld;
 
 out vec4 daColor;
+
+uniform vec3 ambientLight;
+uniform vec3 lightPositionWorld;
+uniform vec3 eyePositionWorld;
 
 uniform sampler2D myTextureSampler_0;
 uniform sampler2D myTextureSampler_1;

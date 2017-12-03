@@ -40,10 +40,9 @@ GLuint TexturePlanetB;
 GLuint TextureObjD;
 GLuint TextureObjG;
 GLuint TextureSkybox;
+GLuint TextureBox;
 
-GLuint lightboxVAO;
-GLuint lightboxVBO;
-GLuint lightboxVBO_IDX;
+
 GLuint skyboxVAO;
 GLuint skyboxVBO;
 extern GLuint earthVao;
@@ -51,19 +50,23 @@ extern GLuint planetCVao;
 extern GLuint planetBVao;
 extern GLuint objDVao;
 extern GLuint objGVao[500];
+extern GLuint boxVao;
 
 extern int drawEarthSize;
 extern int drawPlanetCSize;
 extern int drawPlanetBSize;
 extern int drawObjDSize;
 extern int drawObjGSize[500];
+extern int drawBoxSize;
 
 
 // view matrix
 glm::mat4 common_viewM;
 glm::mat4 common_projection;
+glm::mat4 ViewSwitch_Mat;
 
 float earth_innRot_Degree = 0.0f;
+float light_Rot_Degree = 0.0f;
 
 // ============================= //
 
@@ -81,6 +84,60 @@ float viewRotateDegree[3] = { 0.0f, 0.0f, 0.0f };
 float a_brightness = 0.3f;
 float d_brightness = 0.0f;
 float s_brightness = 0.6f;
+float speed = 2.0f;
+float cameraRotation_x = 0.0f;
+float cameraRotation_y = 0.0f;
+float threex;
+float threey;
+float threez;
+
+bool doPharse = false;
+bool changeView = false;
+vec3 heliPosition;
+int cameraCounter = 0;
+
+void keyboard(unsigned char key, int x, int y)
+{
+	//TODO: Use keyboard to do interactive events and animation
+	if (key == 'a') {
+		cameraX = 0.0f;
+		cameraY = 0.0f;
+		cameraZ = 25.0f;
+		threex = 0.0f;
+		threey = 1.0f;
+		threez = 0.0f;
+	}
+	if (key == 's') {
+		cameraX = 0.0f;
+		cameraY = 25.0f;
+		cameraZ = 0.0f;
+		threex = 0.0f;
+		threey = 0.0f;
+		threez = -1.0f;
+		//ViewSwitch_Mat = glm::lookAt(glm::vec3(0.0f, 25.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+	}
+	if (key == 'd') {
+		cameraX = 20.0f;
+		cameraY = 20.0f;
+		cameraZ = 20.0f;
+		threex = -1.0f;
+		threey = 1.0f;
+		threez = -1.0f;
+		//ViewSwitch_Mat = glm::lookAt(glm::vec3(20.0f, 20.0f, 20.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f, 1.0f, -1.0f));
+	}
+	if (key == 'v') {
+		cameraCounter++;
+		if (cameraCounter % 2 == 1)
+			changeView = true;
+		else
+			changeView = false;
+	}
+
+	
+	if (key == 'p') {
+		doPharse = true;
+	}
+}
 
 void reshape(int w, int h)
 {
@@ -110,6 +167,14 @@ void Mouse_Wheel_Func(int button, int state, int x, int y)
 	}
 }
 
+void PassiveMouse(int x, int y)
+{
+	//TODO: Use Mouse to do interactive events and animation
+	cameraRotation_x = 0.045*x;
+	cameraRotation_y = 0.045*y;
+
+}
+
 void LoadAllTextures()
 {
 	TextureEarth_0 = loadBMP2Texture("texture/earth.bmp");
@@ -120,6 +185,7 @@ void LoadAllTextures()
 	TextureObjD = loadBMP2Texture("texture/helicopter.bmp");
 	//for (GLuint i = 0; i < 500; i++)
 		TextureObjG = loadBMP2Texture("texture/brickwall.bmp");
+	TextureBox = loadBMP2Texture("texture/sea_skybox/front.bmp");
 }
 
 GLuint loadCubemap(vector<const GLchar*> faces)
@@ -174,6 +240,43 @@ GLuint loadCubemap(vector<const GLchar*> faces)
 
 }
 
+vec3 ExtractCameraPos(const mat4 & a_modelView)
+{
+	// Get the 3 basis vector planes at the camera origin and transform them into model space.
+	//  
+	// NOTE: Planes have to be transformed by the inverse transpose of a matrix
+	//       Nice reference here: http://www.opengl.org/discussion_boards/showthread.php/159564-Clever-way-to-transform-plane-by-matrix
+	//
+	//       So for a transform to model space we need to do:
+	//            inverse(transpose(inverse(MV)))
+	//       This equals : transpose(MV) - see Lemma 5 in http://mathrefresher.blogspot.com.au/2007/06/transpose-of-matrix.html
+	//
+	// As each plane is simply (1,0,0,0), (0,1,0,0), (0,0,1,0) we can pull the data directly from the transpose matrix.
+	//  
+	mat4 modelViewT = transpose(a_modelView);
+
+	// Get plane normals 
+	vec3 n1(modelViewT[0]);
+	vec3 n2(modelViewT[1]);
+	vec3 n3(modelViewT[2]);
+
+	// Get plane distances
+	float d1(modelViewT[0].w);
+	float d2(modelViewT[1].w);
+	float d3(modelViewT[2].w);
+
+	// Get the intersection of these 3 planes
+	// http://paulbourke.net/geometry/3planes/
+	vec3 n2n3 = cross(n2, n3);
+	vec3 n3n1 = cross(n3, n1);
+	vec3 n1n2 = cross(n1, n2);
+
+	vec3 top = (n2n3 * d1) + (n3n1 * d2) + (n1n2 * d3);
+	float denom = dot(n1, n2n3);
+
+	return top / -denom;
+}
+
 void sendDataToOpenGL()
 {
 	//Load objects and bind to VAO & VBO
@@ -182,68 +285,9 @@ void sendDataToOpenGL()
 	bindPlanetC("obj/planet.obj");
 	bindObjD("obj/helicopter2.obj");
 	bindObjG("obj/rock.obj");
+	bindLightbox("obj/rock.obj");
 	// load all textures
 	LoadAllTextures();
-
-	// light source box
-	const GLfloat cubic[] =
-	{
-		-1.0f, -1.0f, -1.0f, // position 0
-		+1.0f, +1.0f, +1.0f, // color
-
-		-1.0f, +1.0f, -1.0f, // position 1
-		+1.0f, +1.0f, +1.0f, // color
-
-		+1.0f, -1.0f, -1.0f, // position 2
-		+1.0f, +1.0f, +1.0f, // color
-
-		+1.0f, +1.0f, -1.0f, // postiion 3
-		+1.0f, +1.0f, +1.0f, // color
-
-		-1.0f, -1.0f, +1.0f, // position 4
-		+1.0f, +1.0f, +1.0f, // color
-
-		-1.0f, +1.0f, +1.0f, // position 5
-		+1.0f, +1.0f, +1.0f, // color
-
-		+1.0f, -1.0f, +1.0f, // position 6
-		+1.0f, +1.0f, +1.0f, // color
-
-		+1.0f, +1.0f, +1.0f, // postiion 7
-		+1.0f, +1.0f, +1.0f, // color
-
-	};
-	GLushort indices_1[] = {
-		0, 1, 2,
-		1, 2, 3,
-		4, 5, 6,
-		5, 6, 7,
-		0, 2, 4,
-		2, 4, 6,
-		1, 3, 5,
-		3, 5, 7,
-		2, 3, 6,
-		3, 6, 7,
-		0, 1, 4,
-		1, 4, 5,
-	};
-
-	glGenVertexArrays(1, &lightboxVAO);
-	glGenBuffers(1, &lightboxVBO);
-	glGenBuffers(1, &lightboxVBO_IDX);
-
-	glBindVertexArray(lightboxVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, lightboxVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cubic), cubic, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lightboxVBO_IDX);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices_1), indices_1, GL_STATIC_DRAW);
-
-	//vertex position
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
-	//vertex color
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (char*)(3 * sizeof(float)));
 
 	// skybox
 	GLfloat skyboxVertices[] =
@@ -275,6 +319,7 @@ void sendDataToOpenGL()
 
 float zLightPos = 10.0f;
 float yLightPos = 10.0f;
+float xLightPos = 0.0f;
 void set_lighting()
 {
 	glUseProgram(programID);
@@ -297,11 +342,42 @@ void set_lighting()
 	glUniform3fv(eyePositionUniformLocation, 1, &eyePosition[0]);
 	// light position
 	GLint lightPositionUniformLocation = glGetUniformLocation(programID, "lightPositionWorld");
-	glm::vec3 lightPosition(0.0, yLightPos, zLightPos);
+	glm::vec3 lightPosition(xLightPos, yLightPos, zLightPos);
 	glUniform3fv(lightPositionUniformLocation, 1, &lightPosition[0]);
 
 	// light color
 	GLint lightColorUniformLocation = glGetUniformLocation(programID, "lightColor");
+	glm::vec4 lightColor(1.0, 1.0, 1.0, 1.0);
+	glUniform4fv(lightColorUniformLocation, 1, &lightColor[0]);
+}
+
+void set_lighting_C()
+{
+	glUseProgram(planetC_programID);
+
+	// ambient
+	GLint ambientLightUniformLocation = glGetUniformLocation(planetC_programID, "ambientLight");
+	glm::vec3 ambientLight(a_brightness, a_brightness, a_brightness);
+	glUniform3fv(ambientLightUniformLocation, 1, &ambientLight[0]);
+	// diffusion
+	GLint kd = glGetUniformLocation(planetC_programID, "coefficient_d");
+	glm::vec3 vec_kd(d_brightness, d_brightness, d_brightness);
+	glUniform3fv(kd, 1, &vec_kd[0]);
+	// specular
+	GLint ks = glGetUniformLocation(planetC_programID, "coefficient_s");
+	glm::vec3 vec_ks(s_brightness, s_brightness, s_brightness);
+	glUniform3fv(ks, 1, &vec_ks[0]);
+	// eye position
+	GLint eyePositionUniformLocation = glGetUniformLocation(planetC_programID, "eyePositionWorld");
+	vec3 eyePosition(cameraX, cameraY, cameraZ);
+	glUniform3fv(eyePositionUniformLocation, 1, &eyePosition[0]);
+	// light position
+	GLint lightPositionUniformLocation = glGetUniformLocation(planetC_programID, "lightPositionWorld");
+	glm::vec3 lightPosition(xLightPos, yLightPos, zLightPos);
+	glUniform3fv(lightPositionUniformLocation, 1, &lightPosition[0]);
+
+	// light color
+	GLint lightColorUniformLocation = glGetUniformLocation(planetC_programID, "lightColor");
 	glm::vec4 lightColor(1.0, 1.0, 1.0, 1.0);
 	glUniform4fv(lightColorUniformLocation, 1, &lightColor[0]);
 }
@@ -349,6 +425,7 @@ void drawPlanetC(void)
 	glBindVertexArray(planetCVao);
 	glm::mat4 scale_M = glm::scale(glm::mat4(1.0f), glm::vec3(scale_fact));
 	glm::mat4 rot_M = glm::rotate(glm::mat4(1.0f), glm::radians(earth_innRot_Degree), glm::vec3(0, 1, 0));
+	//glm::mat4 rot_M = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0, 1, 0));
 	glm::mat4 trans_M = glm::translate(glm::mat4(1.0f), glm::vec3(8.0f, -5.0f, 0.0f));
 	glm::mat4 Model = trans_M * rot_M * scale_M;
 
@@ -410,10 +487,17 @@ void drawObjD(void)
 	glUseProgram(programID);
 
 	glBindVertexArray(objDVao);
+	/*
 	glm::mat4 scale_M = glm::scale(glm::mat4(1.0f), glm::vec3(scale_fact));
 	glm::mat4 rot_M = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0, 1, 0));
 	glm::mat4 trans_M = glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 10.0f, +10.0f));
-	glm::mat4 Model = trans_M * rot_M * scale_M;
+	glm::mat4 Model = trans_M * rot_M * scale_M;*/
+	glm::mat4 scale_M = glm::scale(glm::mat4(1.0f), glm::vec3(scale_fact));
+	glm::mat4 rot_G = glm::rotate(mat4(), (GLfloat)glutGet(GLUT_ELAPSED_TIME)*0.001f*speed, glm::vec3(0, 0, 1));
+	glm::mat4 trans_M = glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 10.0f, -12.0f));
+	glm::mat4 trans_G = glm::translate(glm::mat4(1.0f), glm::vec3(-8.0f, 10.0f, 0.0f));
+	glm::mat4 Model = trans_G*rot_G*trans_M * scale_M;
+	heliPosition = ExtractCameraPos(Model);
 
 	GLint M_ID = glGetUniformLocation(programID, "MM");
 	glUniformMatrix4fv(M_ID, 1, GL_FALSE, &Model[0][0]);
@@ -520,25 +604,37 @@ void drawSkybox(void)
 void drawLightbox(void)
 {
 	// lightbox
-	GLfloat scale_fact = 1.0f;
+	GLfloat scale_fact = 0.2f;
 
-	glUseProgram(lightboxProgramID);
-
-	glBindVertexArray(lightboxVAO);
+	glUseProgram(programID);
+	glBindVertexArray(boxVao);
 	glm::mat4 scale_M = glm::scale(glm::mat4(1.0f), glm::vec3(scale_fact));
 	glm::mat4 rot_M = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0, 1, 0));
-	glm::mat4 trans_M = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, yLightPos, zLightPos)); // light position
-	glm::mat4 Model = trans_M * rot_M * scale_M;
+	//glm::mat4 rot_M = glm::rotate(mat4(), (GLfloat)glutGet(GLUT_ELAPSED_TIME)*0.001f*speed, glm::vec3(1, 0, 0));
+	glm::mat4 trans_M = glm::translate(glm::mat4(1.0f), glm::vec3(xLightPos, yLightPos, zLightPos));
+	//glm::vec4 v = glm::vec4(0.0f, 0.0f, -5.0f, 1.0f);
+	glm::mat4 Model = rot_M *trans_M *  scale_M;
+	xLightPos = 0.0f + 10 * glm::cos(light_Rot_Degree);
+	yLightPos = 10.0f + 10 * glm::sin(light_Rot_Degree);
 
-	GLint M_ID = glGetUniformLocation(lightboxProgramID, "MM");
+	GLint M_ID = glGetUniformLocation(programID, "MM");
 	glUniformMatrix4fv(M_ID, 1, GL_FALSE, &Model[0][0]);
-	GLint V_ID = glGetUniformLocation(lightboxProgramID, "VM");
+	GLint V_ID = glGetUniformLocation(programID, "VM");
 	glUniformMatrix4fv(V_ID, 1, GL_FALSE, &common_viewM[0][0]);
-	GLint P_ID = glGetUniformLocation(lightboxProgramID, "PM");
+	GLint P_ID = glGetUniformLocation(programID, "PM");
 	glUniformMatrix4fv(P_ID, 1, GL_FALSE, &common_projection[0][0]);
 
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, 0);
+	// texture
+	GLuint TextureID = glGetUniformLocation(programID, "myTextureSampler");
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, TextureBox);
+	glUniform1i(TextureID, 0);
+	glActiveTexture(GL_TEXTURE1);
+
+	glDrawArrays(GL_TRIANGLES, 0, drawBoxSize);
 }
+
+
 
 void paintGL(void)
 {
@@ -546,7 +642,11 @@ void paintGL(void)
 
 	// ================================ //
 	// view matrix
-	common_viewM = glm::lookAt(glm::vec3(cameraX, cameraY, cameraZ), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	if(!changeView)
+		common_viewM = glm::lookAt(glm::vec3(cameraX-cameraRotation_x, cameraY-cameraRotation_y, cameraZ), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	else
+		common_viewM = glm::lookAt(heliPosition, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	//common_viewM = glm::lookAt(glm::vec3(cameraX, cameraY, cameraZ), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 	// projection matrix
 	common_projection = glm::perspective(camera_fov, 1.0f, 0.1f, 200.0f);
 	
@@ -555,6 +655,7 @@ void paintGL(void)
 	
 	// set lighting parameters
 	set_lighting();
+	set_lighting_C();
 	// draw earth
 	drawEarth();
 	// draw planet C
@@ -576,7 +677,7 @@ void Shaders_Installer()
 	planetC_programID = installShaders("shader/planetC.vs", "shader/planetC.frag");
 	skyboxProgramID = installShaders("shader/Skybox.vs", "shader/Skybox.frag");
 	earthProgramID = installShaders("shader/Earth.vs", "shader/Earth.frag");
-	lightboxProgramID = installShaders("shader/Lightbox.vs", "shader/Lightbox.frag");
+	//lightboxProgramID = installShaders("shader/Lightbox.vs", "shader/Lightbox.frag");
 	rockProgramID = installShaders("shader/Rock.vs", "shader/Rock.frag");
 
 	if (!checkProgramStatus(programID))
@@ -599,6 +700,7 @@ void initializedGL(void)
 void timerFunction(int id)
 {
 	earth_innRot_Degree += 0.3;
+	light_Rot_Degree += 0.03;
 	
 	glutPostRedisplay();
 	glutTimerFunc(700.0f / 60.0f, timerFunction, 1);
@@ -626,7 +728,11 @@ int main(int argc, char *argv[])
 	glutDisplayFunc(paintGL);
 
 	glutMouseFunc(Mouse_Wheel_Func);
-
+	
+	glutPassiveMotionFunc(PassiveMouse);
+	
+	glutKeyboardFunc(keyboard);
+	
 	glutTimerFunc(700.0f / 60.0f, timerFunction, 1);
 
 	glutReshapeFunc(reshape);
