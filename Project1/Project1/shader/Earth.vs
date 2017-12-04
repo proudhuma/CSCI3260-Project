@@ -10,14 +10,25 @@ uniform mat4 VM;
 
 out vec3 normalWorld;
 out vec2 UV;
+out vec3 vertexPositionWorld;
+
+out float visibility;
+
+const float FogDensity = 0.05;
+const float FogGradient = 3.5;
 
 void main()
 {
+	float distance = length(VM * MM * vec4(vertexPosition_modelspace, 1));
+	visibility = exp(-pow((distance * FogDensity), FogGradient));
+	visibility = clamp(visibility, 0, 1);
+
     vec4 v = vec4(vertexPosition_modelspace, 1);
 	gl_Position = PM * VM * MM * v;
 	
 	vec4 normal_temp = MM * vec4(normal, 0);
 	normalWorld = normal_temp.xyz;
+	vertexPositionWorld = (MM * v).xyz;
 
 	UV = vertexUV;
 }

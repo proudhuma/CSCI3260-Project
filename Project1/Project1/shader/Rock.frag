@@ -3,7 +3,7 @@
 in vec2 UV;
 in vec3 normalWorld;
 in vec3 vertexPositionWorld;
-
+in float visibility;
 out vec4 daColor;
 
 uniform vec3 ambientLight;
@@ -45,5 +45,11 @@ void main()
 
 	//vec3 Material_Clr = texture( myTextureSampler, UV).rgb;
 
-	daColor = vec4(color, 1.0);
+	vec3 Fog_Color = vec3(0.5, 0.5, 0.5);
+
+	vec4 calColor = vec4(color, 1.0);
+
+	vec4 Fog_Real_Color = vec4(Fog_Color, 1.0);
+
+	daColor = mix(Fog_Real_Color, calColor, visibility);
 }

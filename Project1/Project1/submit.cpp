@@ -351,6 +351,68 @@ void set_lighting()
 	glUniform4fv(lightColorUniformLocation, 1, &lightColor[0]);
 }
 
+void set_lightingG()
+{
+	glUseProgram(rockProgramID);
+
+	// ambient
+	GLint ambientLightUniformLocation = glGetUniformLocation(rockProgramID, "ambientLight");
+	glm::vec3 ambientLight(a_brightness, a_brightness, a_brightness);
+	glUniform3fv(ambientLightUniformLocation, 1, &ambientLight[0]);
+	// diffusion
+	GLint kd = glGetUniformLocation(rockProgramID, "coefficient_d");
+	glm::vec3 vec_kd(d_brightness, d_brightness, d_brightness);
+	glUniform3fv(kd, 1, &vec_kd[0]);
+	// specular
+	GLint ks = glGetUniformLocation(rockProgramID, "coefficient_s");
+	glm::vec3 vec_ks(s_brightness, s_brightness, s_brightness);
+	glUniform3fv(ks, 1, &vec_ks[0]);
+	// eye position
+	GLint eyePositionUniformLocation = glGetUniformLocation(rockProgramID, "eyePositionWorld");
+	vec3 eyePosition(cameraX, cameraY, cameraZ);
+	glUniform3fv(eyePositionUniformLocation, 1, &eyePosition[0]);
+	// light position
+	GLint lightPositionUniformLocation = glGetUniformLocation(rockProgramID, "lightPositionWorld");
+	glm::vec3 lightPosition(xLightPos, yLightPos, zLightPos);
+	glUniform3fv(lightPositionUniformLocation, 1, &lightPosition[0]);
+
+	// light color
+	GLint lightColorUniformLocation = glGetUniformLocation(rockProgramID, "lightColor");
+	glm::vec4 lightColor(1.0, 1.0, 1.0, 1.0);
+	glUniform4fv(lightColorUniformLocation, 1, &lightColor[0]);
+}
+
+void set_lightingEarth()
+{
+	glUseProgram(earthProgramID);
+
+	// ambient
+	GLint ambientLightUniformLocation = glGetUniformLocation(earthProgramID, "ambientLight");
+	glm::vec3 ambientLight(a_brightness, a_brightness, a_brightness);
+	glUniform3fv(ambientLightUniformLocation, 1, &ambientLight[0]);
+	// diffusion
+	GLint kd = glGetUniformLocation(earthProgramID, "coefficient_d");
+	glm::vec3 vec_kd(d_brightness, d_brightness, d_brightness);
+	glUniform3fv(kd, 1, &vec_kd[0]);
+	// specular
+	GLint ks = glGetUniformLocation(earthProgramID, "coefficient_s");
+	glm::vec3 vec_ks(s_brightness, s_brightness, s_brightness);
+	glUniform3fv(ks, 1, &vec_ks[0]);
+	// eye position
+	GLint eyePositionUniformLocation = glGetUniformLocation(earthProgramID, "eyePositionWorld");
+	vec3 eyePosition(cameraX, cameraY, cameraZ);
+	glUniform3fv(eyePositionUniformLocation, 1, &eyePosition[0]);
+	// light position
+	GLint lightPositionUniformLocation = glGetUniformLocation(earthProgramID, "lightPositionWorld");
+	glm::vec3 lightPosition(xLightPos, yLightPos, zLightPos);
+	glUniform3fv(lightPositionUniformLocation, 1, &lightPosition[0]);
+
+	// light color
+	GLint lightColorUniformLocation = glGetUniformLocation(earthProgramID, "lightColor");
+	glm::vec4 lightColor(1.0, 1.0, 1.0, 1.0);
+	glUniform4fv(lightColorUniformLocation, 1, &lightColor[0]);
+}
+
 void set_lighting_C()
 {
 	glUseProgram(planetC_programID);
@@ -656,6 +718,7 @@ void paintGL(void)
 	// set lighting parameters
 	set_lighting();
 	set_lighting_C();
+	set_lightingEarth();
 	// draw earth
 	drawEarth();
 	// draw planet C

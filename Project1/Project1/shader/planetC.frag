@@ -3,7 +3,7 @@
 in vec3 normalWorld;
 in vec2 UV;
 in vec3 vertexPositionWorld;
-
+in float visibility;
 out vec4 daColor;
 
 uniform sampler2D myTextureSampler_0;
@@ -44,16 +44,12 @@ void main()
 
 	//vec3 Material_Clr = texture( myTextureSampler, UV).rgb;
 
-	daColor = vec4(color, 1.0);
+	vec3 Fog_Color = vec3(0.5, 0.5, 0.5);
 
+	vec4 calColor = vec4(color, 1.0);
 
-	//vec3 normal = normalize(normalWorld);
-	// obtain normal from normal map in range [0,1]
-	//normal = texture(myTextureSampler_1, UV).rgb;
-	// Transform normal vector to range [-1,1]
-	//normal = normalize(normal * 2.0 - 1.0);
+	vec4 Fog_Real_Color = vec4(Fog_Color, 1.0);
 
-	//vec3 Material_Clr = texture( myTextureSampler_0, UV).rgb;
+	daColor = mix(Fog_Real_Color, calColor, visibility);
 
-	//daColor = vec4(Material_Clr, 1.0);
 }
