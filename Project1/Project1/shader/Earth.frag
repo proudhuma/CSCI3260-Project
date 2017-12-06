@@ -15,19 +15,15 @@ uniform sampler2D myTextureSampler_1;
 
 void main()
 {
-	vec3 normal = normalize(normalWorld);
-	// obtain normal from normal map in range [0,1]
-	normal = texture(myTextureSampler_1, UV).rgb;
-	// Transform normal vector to range [-1,1]
-	normal = normalize(normal * 2.0 - 1.0);
+
 
 	//diffuse
 	vec3 lightVectorWorld = normalize(lightPositionWorld - vertexPositionWorld);
-	float brightness = dot(lightVectorWorld, normal);
+	float brightness = dot(lightVectorWorld, normalize(normalWorld));
 	
 	//specular
 	//calculate reflect light direction
-	vec3 reflectedLightVectorWorld = reflect(-lightVectorWorld, normal);
+	vec3 reflectedLightVectorWorld = reflect(-lightVectorWorld, normalWorld);
 	//calculate direction from eye to object
 	vec3 eyeVectorWorld = normalize(eyePositionWorld - vertexPositionWorld);
 	//calculate light brightness according to the angle between eye and reflect light
@@ -36,6 +32,12 @@ void main()
 	s = pow(s, 30);
 
 	vec3 SpecularLightColor = vec3(0.6,0.6,0.6);
+
+	vec3 normal = normalize(normalWorld);
+	// obtain normal from normal map in range [0,1]
+	normal = texture(myTextureSampler_1, UV).rgb;
+	// Transform normal vector to range [-1,1]
+	normal = normalize(normal * 2.0 - 1.0);
 
 	vec3 MaterialAmbientColor = texture(myTextureSampler_0, UV).rgb;
 	vec3 MaterialDiffuseColor = texture(myTextureSampler_0, UV).rgb;
