@@ -9,7 +9,8 @@ out vec4 daColor;
 uniform vec3 ambientLight;
 uniform vec3 lightPositionWorld;
 uniform vec3 eyePositionWorld;
-
+uniform vec3 fogcolor;
+uniform int fogON;
 uniform sampler2D myTextureSampler;
 
 void main()
@@ -45,11 +46,15 @@ void main()
 
 	//vec3 Material_Clr = texture( myTextureSampler, UV).rgb;
 
-	vec3 Fog_Color = vec3(0.5, 0.5, 0.5);
+	//vec3 Fog_Color = vec3(0.5, 0.5, 0.5);
+	vec3 Fog_Color = fogcolor;
 
 	vec4 calColor = vec4(color, 1.0);
 
 	vec4 Fog_Real_Color = vec4(Fog_Color, 1.0);
 
-	daColor = mix(Fog_Real_Color, calColor, visibility);
+	if(fogON == 1)
+		daColor = mix(Fog_Real_Color, calColor, visibility);
+	else
+		daColor = mix(Fog_Real_Color, calColor, 1.0);
 }
