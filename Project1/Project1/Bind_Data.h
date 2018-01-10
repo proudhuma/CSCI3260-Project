@@ -14,6 +14,7 @@ void bindPlanetC(const char * path);
 void bindPlanetB(const char * path);
 void bindObjD(const char * path);
 void bindObjG(const char * path);
+
 void bindLightbox(const char * path);
 /*** END OF FILE ***/
 

@@ -88,8 +88,8 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Dependencies\freeglut;Dependencies\glew</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;freeglut.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>G:\胡恒\CUHK\Year3 Term1\CSCI 3260\proj\csci3260proj\Project1\Project1\Dependencies\include;G:\胡恒\CUHK\Year3 Term1\CSCI 3260\proj\csci3260proj\Project1\Project1\Dependencies\glm;G:\胡恒\CUHK\Year3 Term1\CSCI 3260\proj\csci3260proj\Project1\Project1\Dependencies\glew;G:\胡恒\CUHK\Year3 Term1\CSCI 3260\proj\csci3260proj\Project1\Project1\Dependencies\freeglut;G:\胡恒\CUHK\Year3 Term1\CSCI 3260\proj\csci3260proj\Project1\Project1\Dependencies\glui</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;freeglut.lib;glew32.lib;glui32.lib;irrKlang.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -119,8 +119,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>Dependencies\glew;Dependencies\freeglut</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;freeglut.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>G:\胡恒\CUHK\Year3 Term1\CSCI 3260\proj\csci3260proj\Project1\Project1\Dependencies\include;G:\胡恒\CUHK\Year3 Term1\CSCI 3260\proj\csci3260proj\Project1\Project1\Dependencies\glm;G:\胡恒\CUHK\Year3 Term1\CSCI 3260\proj\csci3260proj\Project1\Project1\Dependencies\glew;G:\胡恒\CUHK\Year3 Term1\CSCI 3260\proj\csci3260proj\Project1\Project1\Dependencies\freeglut;G:\胡恒\CUHK\Year3 Term1\CSCI 3260\proj\csci3260proj\Project1\Project1\Dependencies\glui</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;freeglut.lib;glew32.lib;glui32.lib;irrKlang.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -4,12 +4,15 @@ in vec2 UV;
 in vec3 normalWorld;
 in vec3 vertexPositionWorld;
 
+in float visibility;
+
 out vec4 daColor;
 
 uniform vec3 ambientLight;
 uniform vec3 lightPositionWorld;
 uniform vec3 eyePositionWorld;
-
+uniform vec3 fogcolor;
+uniform int fogON;
 uniform sampler2D myTextureSampler;
 
 void main()
@@ -20,7 +23,7 @@ void main()
 	
 	//specular
 	//calculate reflect light direction
-	vec3 reflectedLightVectorWorld = reflect(-lightVectorWorld, normalWorld);
+	vec3 reflectedLightVectorWorld = reflect(-lightVectorWorld, normalize(normalWorld));
 	//calculate direction from eye to object
 	vec3 eyeVectorWorld = normalize(eyePositionWorld - vertexPositionWorld);
 	//calculate light brightness according to the angle between eye and reflect light
@@ -45,5 +48,15 @@ void main()
 
 	//vec3 Material_Clr = texture( myTextureSampler, UV).rgb;
 
-	daColor = vec4(color, 1.0);
+	//vec3 Fog_Color = vec3(0.5, 0.5, 0.5);
+	vec3 Fog_Color = fogcolor;
+
+	vec4 calColor = vec4(color, 1.0);
+
+	vec4 Fog_Real_Color = vec4(Fog_Color, 1.0);
+
+	if(fogON == 1)
+		daColor = mix(Fog_Real_Color, calColor, visibility);
+	else
+		daColor = mix(Fog_Real_Color, calColor, 1.0);
 }
