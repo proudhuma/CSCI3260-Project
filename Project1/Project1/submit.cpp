@@ -24,6 +24,8 @@ using glm::mat4;
 int Win_w, Win_h;
 float camera_fov = 45.0;
 unsigned int amount = 500;
+GLuint rock_amount = 5000;
+mat4 *rock_RandMatrices;
 
 int  mainWindowID;
 GLint programID;
@@ -89,9 +91,9 @@ float precameraY = 0;
 float precameraZ = 0;
 float viewRotateDegree[3] = { 0.0f, 0.0f, 0.0f };
 
-float a_brightness = 0.3f;
+float a_brightness = 0.5f;
 float d_brightness = 0.0f;
-float s_brightness = 0.6f;
+float s_brightness = 0.1f;
 float speed = 2.0f;
 float cameraRotation_x = 0.0f;
 float cameraRotation_y = 0.0f;
@@ -343,6 +345,38 @@ vec3 ExtractCameraPos(const mat4 & a_modelView)
 	return top / -denom;
 }
 
+void CreateRand_ModelM() {
+	rock_RandMatrices = new mat4[rock_amount];
+	srand(glutGet(GLUT_ELAPSED_TIME));
+	GLfloat radius = 6.0f;
+	GLfloat offset = 1.2f;
+	for (GLuint i = 0; i < rock_amount; i++)
+	{
+		mat4 model;
+		// 1. translation: displace along circle with 'radius' in range [-offset, offset]
+		GLfloat angle = (GLfloat)i / (GLfloat)rock_amount * 360.0f;
+		GLfloat displacement = (rand() % (GLint)(2 * offset * 100)) / 50.0f - offset;
+		GLfloat x = sin(angle) * radius + displacement;
+		displacement = (rand() % (GLint)(2 * offset * 100)) / 50.0f - offset;
+		GLfloat y = displacement * 0.4f; // keep height of field smaller compared to width of x and z
+		displacement = (rand() % (GLint)(2 * offset * 100)) / 50.0f - offset;
+		GLfloat z = cos(angle) * radius + displacement;
+		model = translate(model, glm::vec3(x, y, z));
+
+		// 2. scale: Scale between 0.05 and 0.25f
+		GLfloat scale = (rand() % 20) / 2000.0f + 0.05;
+		model = glm::scale(model, glm::vec3(scale));
+
+		// 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
+		GLfloat rotAngle = (rand() % 360);
+		model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
+
+		// 4. now add to list of matrices
+		rock_RandMatrices[i] = model;
+	}
+}
+
+
 void sendDataToOpenGL()
 {
 	//Load objects and bind to VAO & VBO
@@ -421,6 +455,7 @@ void set_lighting()
 	GLint lightColorUniformLocation = glGetUniformLocation(programID, "lightColor");
 	glm::vec4 lightColor(1.0, 1.0, 1.0, 1.0);
 	glUniform4fv(lightColorUniformLocation, 1, &lightColor[0]);
+
 }
 
 void set_lightingG()

@@ -21,7 +21,7 @@ void main()
 	
 	//specular
 	//calculate reflect light direction
-	vec3 reflectedLightVectorWorld = reflect(-lightVectorWorld, normalWorld);
+	vec3 reflectedLightVectorWorld = reflect(-lightVectorWorld, normalize(normalWorld));
 	//calculate direction from eye to object
 	vec3 eyeVectorWorld = normalize(eyePositionWorld - vertexPositionWorld);
 	//calculate light brightness according to the angle between eye and reflect light
